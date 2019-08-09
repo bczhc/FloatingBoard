@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="btn_string">
+        <item>返回</item>
+        <item>切换</item>
+        <item>颜色</item>
+        <item>粗细</item>
+        <item>撤销</item>
+        <item>恢复</item>
+        <item>擦除</item>
+        <item>绘画</item>
+        <item>清空</item>
+        <item>退出</item>
+    </array>
+</resources>
