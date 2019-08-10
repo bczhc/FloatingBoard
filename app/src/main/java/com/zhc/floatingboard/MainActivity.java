@@ -1,13 +1,11 @@
 package com.zhc.floatingboard;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
-import android.graphics.PixelFormat;
+import android.graphics.*;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -91,14 +89,15 @@ public class MainActivity extends AppCompatActivity {
         lp.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         wm.addView(pv, lp);
         lp.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-        lp2.width = 75;
+        lp2.width = /*(int) (width * proportionX)*/WindowManager.LayoutParams.WRAP_CONTENT;
         lp2.height = WindowManager.LayoutParams.WRAP_CONTENT;
         lp2.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE/* | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL*/;
         ll = new LinearLayout(this);
         LinearLayout.LayoutParams ll_lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        LinearLayout.LayoutParams childTV_lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, /*ViewGroup.LayoutParams.WRAP_CONTENT*/height / 2 / strings.length);
+        childTV_lp.setMargins(0, 0, 0, 5);
         ll.setOrientation(LinearLayout.VERTICAL);
         ll.setLayoutParams(ll_lp);
-//        Button btn = new Button(this);
         ImageView iv = new ImageView(this);
         InputStream inputStream = getResources().openRawResource(R.raw.db);
         Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
@@ -107,7 +106,9 @@ public class MainActivity extends AppCompatActivity {
         } catch (IOException ignored) {
         }
         iv.setImageBitmap(bitmap);
-        iv.setLayoutParams(new ViewGroup.LayoutParams(75, 75));
+        float proportionX = ((float) 75) / ((float) 720);
+        float proportionY = ((float) 75) / ((float) 1360);
+        iv.setLayoutParams(new ViewGroup.LayoutParams((int) (width * proportionX), (int) (height * proportionY)));
         View.OnTouchListener smallViewOnTouchListener = new View.OnTouchListener() {
             private int lastRawX, lastRawY, paramX, paramY;
             private float lastX, lastY;
@@ -134,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
                         wm.updateViewLayout(ll, lp2);
                         break;
                     case MotionEvent.ACTION_UP:
-                        if (lastX == x && lastY == y) v.performClick();
+                        if (Math.abs(lastX - x) < 1 && Math.abs(lastY - y) < 1) v.performClick();
                         break;
                 }
                 return true;
@@ -146,11 +147,15 @@ public class MainActivity extends AppCompatActivity {
             for (int i = 0; i < strings.length; i++) {
                 LinearLayout linearLayout = new LinearLayout(this);
                 linearLayout.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, 0, 1F));
-                Button childBtn = new Button(this);
-                childBtn.setLayoutParams(ll_lp);
-                childBtn.setText(strings[i]);
+                TextView childTV = new TextView(this);
+                childTV.setLayoutParams(childTV_lp);
+                childTV.setText(strings[i]);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    childTV.setAutoSizeTextTypeWithDefaults(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM);
+                } else childTV.setTextSize(20F);
+                childTV.setBackgroundColor(Color.WHITE);
                 int finalI = i;
-                childBtn.setOnClickListener(v1 -> {
+                childTV.setOnClickListener(v1 -> {
 //                    Toast.makeText(this, "click: " + finalI, Toast.LENGTH_SHORT).show();
                     switch (finalI) {
                         case 0:
@@ -162,13 +167,31 @@ public class MainActivity extends AppCompatActivity {
                             if (lp.flags == (WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)) {
                                 lp.flags = 0;
                                 wm.updateViewLayout(pv, lp);
+                                childTV.setText(R.string.controlling);
                             } else {
                                 lp.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
                                 wm.updateViewLayout(pv, lp);
+                                childTV.setText(R.string.drawing);
                             }
                             break;
                         case 2:
-                            ColorPickerDialog dialog = new ColorPickerDialog(this, Color.RED, "Color picker", color -> pv.setPaintColor(color));
+                            Dialog dialog = new Dialog(this);
+
+                            ColorPickerLL dialog_ll = new ColorPickerLL(this, ((int) (width * .6)), ((int) (height * .6)), pv.getColor()) {
+                                @Override
+                                void onPickedAction(int color) {
+//                                    super.onPickedAction(pickedColor);
+                                }
+
+                                @Override
+                                void onDoneBtnPressed(int color) {
+//                                    super.onDoneBtnPressed();
+                                    dialog.dismiss();
+//                                    Toast.makeText(MainActivity.this, String.valueOf(color), Toast.LENGTH_SHORT).show();
+                                    pv.setPaintColor(color);
+                                }
+                            };
+                            dialog.setContentView(dialog_ll);
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                                 Objects.requireNonNull(dialog.getWindow()).setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY);
                             } else //noinspection deprecation
@@ -186,9 +209,11 @@ public class MainActivity extends AppCompatActivity {
                             break;
                         case 6:
                             pv.setEraserModel(true);
+                            childTV.setText(R.string.eraser_mode);
                             break;
                         case 7:
                             pv.setEraserModel(false);
+                            childTV.setText(R.string.drawing_mode);
                             break;
                         case 8:
                             pv.clearAll();
@@ -200,8 +225,8 @@ public class MainActivity extends AppCompatActivity {
                     }
                     System.out.println("i = " + finalI);
                 });
-                childBtn.setOnTouchListener(smallViewOnTouchListener);
-                linearLayout.addView(childBtn);
+                childTV.setOnTouchListener(smallViewOnTouchListener);
+                linearLayout.addView(childTV);
                 ll.addView(linearLayout);
             }
         });
@@ -212,17 +237,42 @@ public class MainActivity extends AppCompatActivity {
 
     private void changeStrokeWidth() {
         LinearLayout ll = new LinearLayout(this);
-        Dialog dialog = new Dialog(this);
-        SeekBar sb = new SeekBar(this);
         TextView widthWatchView = new TextView(this);
+        SeekBar sb = new SeekBar(this);
         widthWatchView.setBackgroundColor(pv.getColor());
-        widthWatchView.setHeight((int) pv.getStrokeWidth());
+        TextView tv = new TextView(this);
+        tv.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        tv.setTextSize(20F);
+        tv.setOnClickListener(v -> {
+            AlertDialog.Builder adb = new AlertDialog.Builder(this);
+            EditText et = new EditText(this);
+            et.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            adb.setPositiveButton("确定", (dialog, which) -> {
+                double edit = Double.parseDouble(et.getText().toString());
+                double a = Math.log(edit) / Math.log(1.07d);
+                widthWatchView.setHeight((int) edit);
+                sb.setProgress((int) a);
+            }).setNegativeButton("取消", (dialog, which) -> {
+            }).setTitle("输入画笔宽度(pixels)").setView(et);
+            AlertDialog ad = adb.create();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                Objects.requireNonNull(ad.getWindow()).setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY);
+            } else //noinspection deprecation
+                Objects.requireNonNull(ad.getWindow()).setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
+            ad.show();
+        });
+        Dialog dialog = new Dialog(this);
+        sb.setProgress(((int) (Math.log((double) pv.getStrokeWidth()) / Math.log(1.07D))));
+        widthWatchView.setHeight((int) Math.pow(1.07D, (double) sb.getProgress()));
+        tv.setText(String.valueOf((int) Math.pow(1.07D, (double) sb.getProgress())));
         sb.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 System.out.println("progress = " + progress);
-                pv.setStrokeWidth(progress);
-                widthWatchView.setHeight(progress);
+                double pow = Math.pow(1.07D, ((double) progress));
+                pv.setStrokeWidth((float) ((int) pow));
+                widthWatchView.setHeight((int) pow);
+                tv.setText(String.valueOf((int) pow));
             }
 
             @Override
@@ -237,8 +287,9 @@ public class MainActivity extends AppCompatActivity {
         });
         sb.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         sb.setMax(100);
-        ll.addView(sb);
         ll.setOrientation(LinearLayout.VERTICAL);
+        ll.addView(tv);
+        ll.addView(sb);
         ll.addView(widthWatchView);
         ll.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         dialog.setContentView(ll, new ViewGroup.LayoutParams(width, ViewGroup.LayoutParams.WRAP_CONTENT));

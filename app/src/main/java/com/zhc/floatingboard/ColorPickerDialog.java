@@ -304,7 +304,7 @@ class ColorPickerDialog extends Dialog {
 
                     rectRight + offset * 2, rectBottom + offset, mLinePaint);//下
 
-            super.onDraw(canvas);
+//            super.onDraw(canvas);
 
         }
 
@@ -634,7 +634,7 @@ class ColorPickerDialog extends Dialog {
     /**
      * 回调接口
      *
-     * @author <a href="clarkamx@gmail.com">LynK</a>
+     * @author <GradientUtil href="clarkamx@gmail.com">LynK</GradientUtil>
      * <p>
      * Create on 2012-1-6 上午8:21:05
      */

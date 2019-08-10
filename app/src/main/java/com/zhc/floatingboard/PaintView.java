@@ -278,7 +278,10 @@ public class PaintView extends View {
                 float dy = Math.abs(y - mLastY);
                 if (dx >= 0 || dy >= 0) {//绘制的最小距离 0px
                     //利用二阶贝塞尔曲线，使绘制路径更加圆滑
-                    mPath.quadTo(mLastX, mLastY, (mLastX + x) / 2, (mLastY + y) / 2);
+                    try {
+                        mPath.quadTo(mLastX, mLastY, (mLastX + x) / 2, (mLastY + y) / 2);
+                    } catch (NullPointerException ignored) {
+                    }
                 }
                 mLastX = x;
                 mLastY = y;
