@@ -181,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
                         case 2:
                             Dialog dialog = new Dialog(this);
 
-                            ColorPickerLL dialog_ll = new ColorPickerLL(this, ((int) (width * .6)), ((int) (height * .6)), pv.getColor()) {
+                            ColorPickerRL dialog_rl = new ColorPickerRL(this, ((int) (width * .6)), ((int) (height * .6)), pv.getColor()) {
                                 @Override
                                 void onPickedAction(int color) {
 //                                    super.onPickedAction(pickedColor);
@@ -195,7 +195,8 @@ public class MainActivity extends AppCompatActivity {
                                     pv.setPaintColor(color);
                                 }
                             };
-                            dialog.setContentView(dialog_ll);
+                            Objects.requireNonNull(dialog.getWindow()).setBackgroundDrawableResource(R.color.transparent);
+                            dialog.setContentView(dialog_rl);
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                                 Objects.requireNonNull(dialog.getWindow()).setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY);
                             } else //noinspection deprecation

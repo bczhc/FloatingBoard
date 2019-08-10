@@ -10,7 +10,7 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
-public class ColorPickerLeftGradient extends View {
+public abstract class ColorPickerLeftGradient extends View {
     private Paint mPaint = null;
     private int mHeight;
     private int mWidth;
@@ -62,6 +62,5 @@ public class ColorPickerLeftGradient extends View {
         setMeasuredDimension(mWidth, mHeight);
     }
 
-    void onPickedAction(int color) {
-    }
+    abstract void onPickedAction(int color);
 }
