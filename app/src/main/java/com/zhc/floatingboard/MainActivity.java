@@ -1,15 +1,18 @@
 package com.zhc.floatingboard;
 
 import android.annotation.SuppressLint;
-import android.app.AlertDialog;
-import android.app.Dialog;
+import android.app.*;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.*;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.PixelFormat;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -26,6 +29,8 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout ll;
     private PaintView pv;
     private int width;
+    private Bitmap icon;
+    private int height;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -33,8 +38,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 //        RelativeLayout rl = findViewById(R.id.main);
-
-        pv = new PaintView(this);
+        //noinspection deprecation
+        width = this.getWindowManager().getDefaultDisplay().getWidth();
+        //noinspection deprecation
+        height = this.getWindowManager().getDefaultDisplay().getHeight();
+        pv = new PaintView(this, width, height);
         wm = (WindowManager) this.getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
         setBtn();
 
@@ -68,10 +76,6 @@ public class MainActivity extends AppCompatActivity {
         pv.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
         WindowManager.LayoutParams lp2 = new WindowManager.LayoutParams();
-        //noinspection deprecation
-        width = this.getWindowManager().getDefaultDisplay().getWidth();
-        //noinspection deprecation
-        int height = this.getWindowManager().getDefaultDisplay().getHeight();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             lp.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
             lp2.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
@@ -94,18 +98,18 @@ public class MainActivity extends AppCompatActivity {
         lp2.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE/* | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL*/;
         ll = new LinearLayout(this);
         LinearLayout.LayoutParams ll_lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        LinearLayout.LayoutParams childTV_lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, /*ViewGroup.LayoutParams.WRAP_CONTENT*/height / 2 / strings.length);
+        LinearLayout.LayoutParams childTV_lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, /*ViewGroup.LayoutParams.WRAP_CONTENT*/(int) (height / strings.length * .7));
         childTV_lp.setMargins(0, 0, 0, 5);
         ll.setOrientation(LinearLayout.VERTICAL);
         ll.setLayoutParams(ll_lp);
         ImageView iv = new ImageView(this);
         InputStream inputStream = getResources().openRawResource(R.raw.db);
-        Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+        icon = BitmapFactory.decodeStream(inputStream);
         try {
             inputStream.close();
         } catch (IOException ignored) {
         }
-        iv.setImageBitmap(bitmap);
+        iv.setImageBitmap(icon);
         float proportionX = ((float) 75) / ((float) 720);
         float proportionY = ((float) 75) / ((float) 1360);
         iv.setLayoutParams(new ViewGroup.LayoutParams((int) (width * proportionX), (int) (height * proportionY)));
@@ -167,11 +171,11 @@ public class MainActivity extends AppCompatActivity {
                             if (lp.flags == (WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)) {
                                 lp.flags = 0;
                                 wm.updateViewLayout(pv, lp);
-                                childTV.setText(R.string.controlling);
+                                childTV.setText(R.string.drawing);
                             } else {
                                 lp.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
                                 wm.updateViewLayout(pv, lp);
-                                childTV.setText(R.string.drawing);
+                                childTV.setText(R.string.controlling);
                             }
                             break;
                         case 2:
@@ -208,15 +212,19 @@ public class MainActivity extends AppCompatActivity {
                             pv.redo();
                             break;
                         case 6:
-                            pv.setEraserModel(true);
-                            childTV.setText(R.string.eraser_mode);
+                            if (pv.isEraserModel) {
+                                pv.setEraserModel(false);
+                                childTV.setText(R.string.drawing_mode);
+                            } else {
+                                pv.setEraserModel(true);
+                                childTV.setText(R.string.eraser_mode);
+                            }
                             break;
                         case 7:
-                            pv.setEraserModel(false);
-                            childTV.setText(R.string.drawing_mode);
+                            pv.clearAll();
                             break;
                         case 8:
-                            pv.clearAll();
+                            hide();
                             break;
                         case 9:
                             stopFloatingWindow();
@@ -233,6 +241,28 @@ public class MainActivity extends AppCompatActivity {
         iv.setOnTouchListener(smallViewOnTouchListener);
         ll.addView(iv);
         wm.addView(ll, lp2);
+    }
+
+    private void hide() {
+        wm.removeViewImmediate(ll);
+        NotificationManager nm = (NotificationManager) getSystemService(Service.NOTIFICATION_SERVICE);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            Notification.Builder nb = new Notification.Builder(this, "channel1");
+            nb.setSmallIcon(R.drawable.ic_launcher_background)
+                    .setContentTitle("画板")
+                    .setContentText("点击取消隐藏控制悬浮窗")
+                    .setOngoing(false)
+                    .setAutoCancel(true);
+            nm.notify(1, nb.build());
+        } else {
+            NotificationCompat.Builder ncb = new NotificationCompat.Builder(this, "channel1");
+            ncb.setOngoing(false)
+                    .setAutoCancel(true)
+                    .setContentTitle("画板")
+                    .setContentText("点击取消隐藏控制悬浮窗")
+                    .setSmallIcon(R.mipmap.ic_launcher);
+            nm.notify(1, ncb.build());
+        }
     }
 
     private void changeStrokeWidth() {

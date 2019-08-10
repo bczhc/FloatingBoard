@@ -3,7 +3,6 @@ package com.zhc.floatingboard;
 import android.content.Context;
 import android.graphics.*;
 import android.support.annotation.ColorInt;
-import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -25,23 +24,23 @@ public class PaintView extends View {
     //使用LinkedList 模拟栈，来保存 Path
     private LinkedList<PathBean> undoList;
     private LinkedList<PathBean> redoList;
-    private boolean isEraserModel;
+    boolean isEraserModel;
 
 
-    public PaintView(Context context, AttributeSet attrs) {
+    /*public PaintView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
-    }
+    }*/
 
-    public PaintView(Context context) {
+    public PaintView(Context context, int width, int height) {
         super(context);
-        init();
+        init(width, height);
     }
 
     /***
      * 初始化
      */
-    private void init() {
+    private void init(int width, int height) {
         //关闭硬件加速
         //否则橡皮擦模式下，设置的 PorterDuff.Mode.CLEAR ，实时绘制的轨迹是黑色
 //        setBackgroundColor(Color.WHITE);//设置白色背景
@@ -59,7 +58,7 @@ public class PaintView extends View {
             public void run() {
                 //获取PaintView的宽和高
                 //由于橡皮擦使用的是 Color.TRANSPARENT ,不能使用RGB-565
-                mBitmap = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_4444);
+                mBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_4444);
                 mCanvas = new Canvas(mBitmap);
                 //抗锯齿
                 mCanvas.setDrawFilter(new PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG));
@@ -244,7 +243,7 @@ public class PaintView extends View {
             case MotionEvent.ACTION_MOVE:
                 float dx = Math.abs(x - mLastX);
                 float dy = Math.abs(y - mLastY);
-                if (dx >= 3 || dy >= 3) {//绘制的最小距离 3px
+                if (dx >= 0 || dy >= 0) {//绘制的最小距离 3px
                     eraserPath.quadTo(mLastX, mLastY, (mLastX + x) / 2, (mLastY + y) / 2);
                 }
                 mLastX = x;
