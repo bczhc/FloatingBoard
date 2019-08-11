@@ -14,10 +14,7 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.WindowManager;
+import android.view.*;
 import android.widget.*;
 
 import java.io.IOException;
@@ -37,16 +34,15 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-//        RelativeLayout rl = findViewById(R.id.main);
         //noinspection deprecation
         width = this.getWindowManager().getDefaultDisplay().getWidth();
         //noinspection deprecation
         height = this.getWindowManager().getDefaultDisplay().getHeight();
+        setContentView(R.layout.activity_main);
+//        RelativeLayout rl = findViewById(R.id.main);
         pv = new PaintView(this, width, height);
         wm = (WindowManager) this.getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
         setBtn();
-
     }
 
 
@@ -181,27 +177,25 @@ public class MainActivity extends AppCompatActivity {
                             break;
                         case 2:
                             Dialog dialog = new Dialog(this);
-
-                            ColorPickerRL dialog_rl = new ColorPickerRL(this, ((int) (width * .6)), ((int) (height * .6)), pv.getColor()) {
-                                @Override
-                                void onPickedAction(int color) {
-//                                    super.onPickedAction(pickedColor);
-                                }
-
-                                @Override
-                                void onDoneBtnPressed(int color) {
-//                                    super.onDoneBtnPressed();
-                                    dialog.dismiss();
-//                                    Toast.makeText(MainActivity.this, String.valueOf(color), Toast.LENGTH_SHORT).show();
-                                    pv.setPaintColor(color);
-                                }
-                            };
                             Objects.requireNonNull(dialog.getWindow()).setBackgroundDrawableResource(R.color.transparent);
-                            dialog.setContentView(dialog_rl);
+                            /*dialog.getWindow().setAttributes(new WindowManager.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
+                                    , WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY, 0, PixelFormat.RGBX_8888));*/
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                                 Objects.requireNonNull(dialog.getWindow()).setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY);
                             } else //noinspection deprecation
                                 Objects.requireNonNull(dialog.getWindow()).setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
+                            HSVColorPickerRL hsvColorPickerRL = new HSVColorPickerRL(this, pv.getColor(), ((int) (width * .8)), ((int) (height * .4))) {
+                                @Override
+                                void onPickedAction(int color) {
+                                    pv.setPaintColor(color);
+                                }
+                            };
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                dialog.getWindow().setAttributes(new WindowManager.LayoutParams((int) (width * .8), (int) (height * .4), WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, 0, PixelFormat.RGBX_8888));
+                            } else
+                                //noinspection deprecation
+                                dialog.getWindow().setAttributes(new WindowManager.LayoutParams((int) (width * .8), (int) (height * .4), WindowManager.LayoutParams.TYPE_SYSTEM_ALERT, 0, PixelFormat.RGBX_8888));
+                            dialog.setContentView(hsvColorPickerRL);
                             dialog.show();
                             break;
                         case 3:
