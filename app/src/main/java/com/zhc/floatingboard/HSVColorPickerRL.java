@@ -18,23 +18,27 @@ import android.widget.TextView;
 
 @SuppressLint("ViewConstructor")
 abstract class HSVColorPickerRL extends RelativeLayout {
-    private float[] hsv;
+    private float[] hsv = new float[3];
     private int alpha;
     private int width, height;
     private Context context;
     private View[] hsvAView;
     private View vv;
-    private float[] sHsvA = new float[3];
+    private float[][] temp = new float[4][4];
+    private float[] currentXPos = new float[4];
+    private Paint oppositeColorPaint;
 
     HSVColorPickerRL(Context context, int initializeColor, int width, int height) {
         super(context);
         this.width = width;
         this.height = height;
         this.context = context;
+        oppositeColorPaint = new Paint();
         alpha = initializeColor >>> 24;
-        hsv = new float[3];
         Color.colorToHSV(initializeColor, hsv);
-        System.arraycopy(hsv, 0, sHsvA, 0, hsv.length);
+        for (int i = 0; i < 4; i++) {
+            setCurrentX(i);
+        }
         init();
     }
 
@@ -91,11 +95,14 @@ abstract class HSVColorPickerRL extends RelativeLayout {
         @Override
         protected void onDraw(Canvas canvas) {
             //        super.onDraw(canvas);
+            System.arraycopy(hsv, 0, temp[0], 0, hsv.length);
+            temp[0][3] = alpha;
             for (float i = 0; i < hW; i++) {
-                sHsvA[0] = i / ((float) hW) * 360F;
-                hPaint.setColor(Color.HSVToColor(alpha, sHsvA));
+                temp[0][0] = i * 360F / ((float) hW);
+                hPaint.setColor(Color.HSVToColor((int) temp[0][3], temp[0]));
                 canvas.drawLine(i, 0, i, hH, hPaint);
             }
+            canvas.drawLine(setCurrentX(0), 0, currentXPos[0], hH, oppositeColorPaint);
         }
 
         private void hInit() {
@@ -108,10 +115,12 @@ abstract class HSVColorPickerRL extends RelativeLayout {
             setMeasuredDimension(hW, hH);
         }
 
+
         @SuppressLint("ClickableViewAccessibility")
         @Override
         public boolean onTouchEvent(MotionEvent event) {
-            hsv[0] = event.getX() / ((float) hW) * 360F;
+            hsv[0] = event.getX() * 360F / ((float) hW);
+            oppositeColorPaint.setColor(Color.HSVToColor(alpha, new float[]{hsv[0] + 180, hsv[1], hsv[2]}));
             invalidateAllView(0);
             return true;
         }
@@ -141,11 +150,14 @@ abstract class HSVColorPickerRL extends RelativeLayout {
         @Override
         protected void onDraw(Canvas canvas) {
 //            super.onDraw(canvas);
+            System.arraycopy(hsv, 0, temp[1], 0, hsv.length);
+            temp[1][3] = alpha;
             for (float i = 0; i < sW; i++) {
-                sHsvA[1] = i / ((float) sW);
-                sPaint.setColor(Color.HSVToColor(alpha, sHsvA));
+                temp[1][1] = i / ((float) sW);
+                sPaint.setColor(Color.HSVToColor((int) temp[1][3], temp[1]));
                 canvas.drawLine(i, 0F, i, ((float) height), sPaint);
             }
+            canvas.drawLine(setCurrentX(1), 0F, currentXPos[1], sH, oppositeColorPaint);
         }
 
         @SuppressLint("ClickableViewAccessibility")
@@ -181,11 +193,14 @@ abstract class HSVColorPickerRL extends RelativeLayout {
         @Override
         protected void onDraw(Canvas canvas) {
 //            super.onDraw(canvas);
+            System.arraycopy(hsv, 0, temp[2], 0, hsv.length);
+            temp[2][3] = alpha;
             for (float i = 0; i < vW; i++) {
-                sHsvA[2] = i / ((float) vW);
-                vPaint.setColor(Color.HSVToColor(alpha, sHsvA));
+                temp[2][2] = i / ((float) vW);
+                vPaint.setColor(Color.HSVToColor((int) temp[2][3], temp[2]));
                 canvas.drawLine(i, 0F, i, ((float) height), vPaint);
             }
+            canvas.drawLine(setCurrentX(2), 0F, currentXPos[2], vH, oppositeColorPaint);
         }
 
         @SuppressLint("ClickableViewAccessibility")
@@ -215,10 +230,13 @@ abstract class HSVColorPickerRL extends RelativeLayout {
         @Override
         protected void onDraw(Canvas canvas) {
 //            super.onDraw(canvas);
+            System.arraycopy(hsv, 0, temp[3], 0, hsv.length);
+            temp[3][3] = alpha;
             for (float i = 0; i < aW; i++) {
-                aPaint.setColor(Color.HSVToColor((int) (i / ((float) aW) * 255), hsv));
+                aPaint.setColor(Color.HSVToColor((int) (i * 255 / ((float) aW)), temp[3]));
                 canvas.drawLine(i, 0F, i, ((float) aH), aPaint);
             }
+            canvas.drawLine(setCurrentX(3), 0F, currentXPos[3], aH, oppositeColorPaint);
         }
 
         @Override
@@ -240,12 +258,20 @@ abstract class HSVColorPickerRL extends RelativeLayout {
     private void invalidateAllView(int notDrawIndex) {
         for (int i = 0; i < hsvAView.length; i++) {
             if (i == notDrawIndex) continue;
-            int finalI = i;
-            new Thread(() -> hsvAView[finalI].postInvalidate()).start();
+//            int finalI = i;
+//            new Thread(() -> hsvAView[finalI].postInvalidate()).start();
+            hsvAView[i].invalidate();
         }
         int color = Color.HSVToColor(alpha, hsv);
         vv.setBackgroundColor(color);
         onPickedAction(color);
+    }
+
+    private float setCurrentX(int i) {
+        if (i == 1 || i == 2) return currentXPos[i] = hsv[i] * width;
+        if (i == 0) return currentXPos[0] = hsv[0] * ((float) width) / 360F;
+        if (i == 3) return currentXPos[3] = alpha * ((float) width) / 255F;
+        return 0;
     }
 
     abstract void onPickedAction(int color);
