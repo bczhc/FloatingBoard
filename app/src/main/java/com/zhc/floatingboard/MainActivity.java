@@ -41,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 //        RelativeLayout rl = findViewById(R.id.main);
         pv = new PaintView(this, width, height);
+        pv.setStrokeWidth(10);
         pv.setPaintColor(Color.RED);
         wm = (WindowManager) this.getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
         setBtn();
@@ -143,21 +144,22 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         };
+        TextView[] childTVs = new TextView[strings.length];
         iv.setOnClickListener(v -> {
             System.out.println("click");
             ll.removeAllViews();
             for (int i = 0; i < strings.length; i++) {
                 LinearLayout linearLayout = new LinearLayout(this);
                 linearLayout.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, 0, 1F));
-                TextView childTV = new TextView(this);
-                childTV.setLayoutParams(childTV_lp);
-                childTV.setText(strings[i]);
+                childTVs[i] = new TextView(this);
+                childTVs[i].setLayoutParams(childTV_lp);
+                childTVs[i].setText(strings[i]);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    childTV.setAutoSizeTextTypeWithDefaults(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM);
-                } else childTV.setTextSize(20F);
-                childTV.setBackgroundColor(Color.WHITE);
+                    childTVs[i].setAutoSizeTextTypeWithDefaults(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM);
+                } else childTVs[i].setTextSize(20F);
+                childTVs[i].setBackgroundColor(Color.WHITE);
                 int finalI = i;
-                childTV.setOnClickListener(v1 -> {
+                childTVs[i].setOnClickListener(v1 -> {
 //                    Toast.makeText(this, "click: " + finalI, Toast.LENGTH_SHORT).show();
                     switch (finalI) {
                         case 0:
@@ -169,11 +171,11 @@ public class MainActivity extends AppCompatActivity {
                             if (lp.flags == (WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)) {
                                 lp.flags = 0;
                                 wm.updateViewLayout(pv, lp);
-                                childTV.setText(R.string.drawing);
+                                childTVs[finalI].setText(R.string.drawing);
                             } else {
                                 lp.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
                                 wm.updateViewLayout(pv, lp);
-                                childTV.setText(R.string.controlling);
+                                childTVs[finalI].setText(R.string.controlling);
                             }
                             break;
                         case 2:
@@ -209,12 +211,12 @@ public class MainActivity extends AppCompatActivity {
                             pv.redo();
                             break;
                         case 6:
-                            if (pv.isEraserModel) {
-                                pv.setEraserModel(false);
-                                childTV.setText(R.string.drawing_mode);
+                            if (pv.isEraserMode) {
+                                pv.setEraserMode(false);
+                                childTVs[finalI].setText(R.string.drawing_mode);
                             } else {
-                                pv.setEraserModel(true);
-                                childTV.setText(R.string.eraser_mode);
+                                pv.setEraserMode(true);
+                                childTVs[finalI].setText(R.string.eraser_mode);
                             }
                             break;
                         case 7:
@@ -224,14 +226,47 @@ public class MainActivity extends AppCompatActivity {
                             hide();
                             break;
                         case 9:
+                            Dialog d = new Dialog(this);
+                            SeekBar sb = new SeekBar(this);
+                            sb.setProgress(100);
+                            sb.setMax(100);
+                            sb.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                                @Override
+                                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                                    for (TextView childTV : childTVs) {
+                                        int alpha = (int) (((float) (progress * 255)) / 100);
+                                        childTV.setBackgroundColor(0xFFFFFF | (alpha << 24));
+                                    }
+                                }
+
+                                @Override
+                                public void onStartTrackingTouch(SeekBar seekBar) {
+
+                                }
+
+                                @Override
+                                public void onStopTrackingTouch(SeekBar seekBar) {
+
+                                }
+                            });
+                            sb.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                Objects.requireNonNull(d.getWindow()).setAttributes(new WindowManager.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, 0, PixelFormat.RGB_888));
+                            } else
+                                //noinspection ControlFlowStatementWithoutBraces,deprecation
+                                Objects.requireNonNull(d.getWindow()).setAttributes(new WindowManager.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.TYPE_SYSTEM_ALERT, 0, PixelFormat.RGB_888));
+                            d.addContentView(sb, new ViewGroup.LayoutParams((int) (((float) width) * .7F), ViewGroup.LayoutParams.WRAP_CONTENT));
+                            d.show();
+                            break;
+                        case 10:
                             stopFloatingWindow();
                             finish();
                             break;
                     }
                     System.out.println("i = " + finalI);
                 });
-                childTV.setOnTouchListener(smallViewOnTouchListener);
-                linearLayout.addView(childTV);
+                childTVs[i].setOnTouchListener(smallViewOnTouchListener);
+                linearLayout.addView(childTVs[i]);
                 ll.addView(linearLayout);
             }
         });
@@ -321,13 +356,12 @@ public class MainActivity extends AppCompatActivity {
         ll.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         dialog.setContentView(ll, new ViewGroup.LayoutParams(width, ViewGroup.LayoutParams.WRAP_CONTENT));
         dialog.setTitle("change stroke width");
-        Objects.requireNonNull(dialog.getWindow()).setBackgroundDrawableResource(R.color.transparent);
+//        Objects.requireNonNull(dialog.getWindow()).setBackgroundDrawableResource(R.color.transparent);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Objects.requireNonNull(dialog.getWindow()).setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY);
         } else //noinspection deprecation
             Objects.requireNonNull(dialog.getWindow()).setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
         dialog.show();
-
     }
 
     private void stopFloatingWindow() {
