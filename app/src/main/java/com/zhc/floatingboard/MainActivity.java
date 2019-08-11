@@ -29,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout ll;
     private PaintView pv;
     private int width;
+    @SuppressWarnings("FieldCanBeLocal")
     private Bitmap icon;
     private int height;
 
@@ -325,6 +326,7 @@ public class MainActivity extends AppCompatActivity {
         ll.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         dialog.setContentView(ll, new ViewGroup.LayoutParams(width, ViewGroup.LayoutParams.WRAP_CONTENT));
         dialog.setTitle("change stroke width");
+        Objects.requireNonNull(dialog.getWindow()).setBackgroundDrawableResource(R.color.transparent);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Objects.requireNonNull(dialog.getWindow()).setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY);
         } else //noinspection deprecation

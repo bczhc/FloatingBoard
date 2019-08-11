@@ -90,8 +90,8 @@ abstract class ColorPickerRL extends RelativeLayout {
                 @Override
                 void onPickedAction(int color) {
                     pickedColor = getColorWithAlpha(color, alpha);
-                    brightLG.setIntermediateColor(color);
-                    slg.setSrcColor(color);
+                    brightLG.setIntermediateColor(pickedColor);
+                    if (slg != null) slg.setSrcColor(pickedColor);
                     setBtnColor();
                 }
             };
@@ -275,5 +275,60 @@ abstract class ColorPickerRL extends RelativeLayout {
                 invalidate();
             }
         }
+    }
+
+    abstract static class ColorPickerLeftGradient extends View {
+        private Paint mPaint = null;
+        private int mHeight;
+        private int mWidth;
+        private GradientUtil colorUtil;
+
+        ColorPickerLeftGradient(Context context, int width, int height) {
+            super(context);
+            setMinimumWidth(width);
+            setMinimumHeight(height);
+            mWidth = width;
+            mHeight = height;
+            init();
+        }
+
+        /*public ColorPickerLeftGradient(Context context, @Nullable AttributeSet attrs) {
+            super(context, attrs);
+            init();
+        }*/
+
+        private void init() {
+            mPaint = new Paint();
+            int[] colors = new int[]{0xFFFF0000, 0xFFFF00FF, 0xFF0000FF, 0xFF00FFFF, 0xFF00FF00, 0xFFFFFF00, 0xFFFF0000};
+            LinearGradient lg = new LinearGradient(0F, 0F, mWidth, mHeight, colors, null, LinearGradient.TileMode.MIRROR);
+            mPaint.setShader(lg);
+            colorUtil = new GradientUtil(colors, 0F, mHeight);
+            invalidate();
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            //        super.onDraw(canvas);
+            canvas.drawRect(0F, 0F, mWidth, mHeight, mPaint);
+        }
+
+
+        @SuppressLint("ClickableViewAccessibility")
+        @Override
+        public boolean onTouchEvent(MotionEvent event) {
+            try {
+                onPickedAction(colorUtil.getColor(event.getY()));
+            } catch (Exception ignored) {
+            }
+            return true;
+        }
+
+        @Override
+        protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+            //        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+            setMeasuredDimension(mWidth, mHeight);
+        }
+
+        abstract void onPickedAction(int color);
     }
 }
