@@ -27,6 +27,7 @@ abstract class HSVColorPickerRL extends RelativeLayout {
     private float[][] temp = new float[4][4];
     private float[] currentXPos = new float[4];
     private Paint oppositeColorPaint;
+    private float lW = 3;
 
     HSVColorPickerRL(Context context, int initializeColor, int width, int height) {
         super(context);
@@ -102,7 +103,7 @@ abstract class HSVColorPickerRL extends RelativeLayout {
                 hPaint.setColor(Color.HSVToColor((int) temp[0][3], temp[0]));
                 canvas.drawLine(i, 0, i, hH, hPaint);
             }
-            canvas.drawLine(setCurrentX(0), 0, currentXPos[0], hH, oppositeColorPaint);
+            canvas.drawRect(setCurrentX(0), 0, currentXPos[0] + lW, hH, oppositeColorPaint);
         }
 
         private void hInit() {
@@ -120,8 +121,10 @@ abstract class HSVColorPickerRL extends RelativeLayout {
         @Override
         public boolean onTouchEvent(MotionEvent event) {
             hsv[0] = event.getX() * 360F / ((float) hW);
-            oppositeColorPaint.setColor(Color.HSVToColor(alpha, new float[]{hsv[0] + 180, hsv[1], hsv[2]}));
-            invalidateAllView(0);
+            int color = Color.HSVToColor(new float[]{hsv[0] + 180 - (hsv[0] > 180 ? 360 : 0), hsv[1], hsv[2]});
+            oppositeColorPaint.setColor(color);
+            System.out.println("color = " + color);
+            invalidateAllView();
             return true;
         }
     }
@@ -157,14 +160,14 @@ abstract class HSVColorPickerRL extends RelativeLayout {
                 sPaint.setColor(Color.HSVToColor((int) temp[1][3], temp[1]));
                 canvas.drawLine(i, 0F, i, ((float) height), sPaint);
             }
-            canvas.drawLine(setCurrentX(1), 0F, currentXPos[1], sH, oppositeColorPaint);
+            canvas.drawRect(setCurrentX(1), 0F, currentXPos[1] + lW, sH, oppositeColorPaint);
         }
 
         @SuppressLint("ClickableViewAccessibility")
         @Override
         public boolean onTouchEvent(MotionEvent event) {
             hsv[1] = event.getX() / ((float) sW);
-            invalidateAllView(1);
+            invalidateAllView();
             return true;
         }
     }
@@ -200,14 +203,14 @@ abstract class HSVColorPickerRL extends RelativeLayout {
                 vPaint.setColor(Color.HSVToColor((int) temp[2][3], temp[2]));
                 canvas.drawLine(i, 0F, i, ((float) height), vPaint);
             }
-            canvas.drawLine(setCurrentX(2), 0F, currentXPos[2], vH, oppositeColorPaint);
+            canvas.drawRect(setCurrentX(2), 0F, currentXPos[2] + lW, vH, oppositeColorPaint);
         }
 
         @SuppressLint("ClickableViewAccessibility")
         @Override
         public boolean onTouchEvent(MotionEvent event) {
             hsv[2] = event.getX() / ((float) vW);
-            invalidateAllView(2);
+            invalidateAllView();
             return true;
         }
     }
@@ -236,7 +239,7 @@ abstract class HSVColorPickerRL extends RelativeLayout {
                 aPaint.setColor(Color.HSVToColor((int) (i * 255 / ((float) aW)), temp[3]));
                 canvas.drawLine(i, 0F, i, ((float) aH), aPaint);
             }
-            canvas.drawLine(setCurrentX(3), 0F, currentXPos[3], aH, oppositeColorPaint);
+            canvas.drawRect(setCurrentX(3), 0F, currentXPos[3] + lW, aH, oppositeColorPaint);
         }
 
         @Override
@@ -250,17 +253,17 @@ abstract class HSVColorPickerRL extends RelativeLayout {
         public boolean onTouchEvent(MotionEvent event) {
             alpha = (int) (event.getX() / ((float) aW) * 255);
             alpha = alpha < 0 ? 0 : (alpha > 255 ? 255 : alpha);
-            invalidateAllView(3);
+            invalidateAllView();
             return true;
         }
     }
 
-    private void invalidateAllView(int notDrawIndex) {
-        for (int i = 0; i < hsvAView.length; i++) {
-            if (i == notDrawIndex) continue;
+    private void invalidateAllView() {
+        for (View view : hsvAView) {
+//            if (i == notDrawIndex) continue;
 //            int finalI = i;
 //            new Thread(() -> hsvAView[finalI].postInvalidate()).start();
-            hsvAView[i].invalidate();
+            view.invalidate();
         }
         int color = Color.HSVToColor(alpha, hsv);
         vv.setBackgroundColor(color);

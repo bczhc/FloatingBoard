@@ -41,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 //        RelativeLayout rl = findViewById(R.id.main);
         pv = new PaintView(this, width, height);
+        pv.setPaintColor(Color.RED);
         wm = (WindowManager) this.getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
         setBtn();
     }
@@ -275,7 +276,7 @@ public class MainActivity extends AppCompatActivity {
             et.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             adb.setPositiveButton("确定", (dialog, which) -> {
                 double edit = Double.parseDouble(et.getText().toString());
-                double a = Math.log(edit) / Math.log(1.07d);
+                double a = Math.log(edit) / Math.log(1.07D);
                 widthWatchView.setHeight((int) edit);
                 sb.setProgress((int) a);
             }).setNegativeButton("取消", (dialog, which) -> {
@@ -338,5 +339,11 @@ public class MainActivity extends AppCompatActivity {
             wm.removeViewImmediate(pv);
         } catch (Exception ignored) {
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        stopFloatingWindow();
+        super.onBackPressed();
     }
 }
