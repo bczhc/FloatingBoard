@@ -6,8 +6,8 @@ android {
         applicationId "com.zhc.floatingboard"
         minSdkVersion 15
         targetSdkVersion 28
-        versionCode 7
-        versionName "1.7.0.1😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂"
+        versionCode 9
+        versionName "1.7.0.3No!!!!!!!!😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {

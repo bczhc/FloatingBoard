@@ -2,12 +2,14 @@ package com.zhc.floatingboard;
 
 import android.annotation.SuppressLint;
 import android.app.*;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
+import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -29,6 +31,9 @@ public class MainActivity extends AppCompatActivity {
     @SuppressWarnings("FieldCanBeLocal")
     private Bitmap icon;
     private int height;
+    private int TVsColor = Color.WHITE, textsColor = Color.GRAY;
+    private boolean whetherTextsColorIsInverted_isChecked = false;
+    private boolean notBeKilled = false;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -39,12 +44,19 @@ public class MainActivity extends AppCompatActivity {
         //noinspection deprecation
         height = this.getWindowManager().getDefaultDisplay().getHeight();
         setContentView(R.layout.activity_main);
+        Switch notBeKilledSwitch = findViewById(R.id.not_be_killed);
+        notBeKilledSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> notBeKilled = isChecked);
 //        RelativeLayout rl = findViewById(R.id.main);
         pv = new PaintView(this, width, height);
         pv.setStrokeWidth(10);
         pv.setPaintColor(Color.RED);
         wm = (WindowManager) this.getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
         setBtn();
+        Intent intent = getIntent();
+        int a = intent.getIntExtra("a", 0);
+        if (a == 1) {
+            startFloatingWindow();
+        }
     }
 
 
@@ -154,10 +166,11 @@ public class MainActivity extends AppCompatActivity {
                 childTVs[i] = new TextView(this);
                 childTVs[i].setLayoutParams(childTV_lp);
                 childTVs[i].setText(strings[i]);
+                childTVs[i].setBackgroundColor(TVsColor);
+                childTVs[i].setTextColor(textsColor);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     childTVs[i].setAutoSizeTextTypeWithDefaults(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM);
                 } else childTVs[i].setTextSize(20F);
-                childTVs[i].setBackgroundColor(Color.WHITE);
                 int finalI = i;
                 childTVs[i].setOnClickListener(v1 -> {
 //                    Toast.makeText(this, "click: " + finalI, Toast.LENGTH_SHORT).show();
@@ -226,37 +239,88 @@ public class MainActivity extends AppCompatActivity {
                             hide();
                             break;
                         case 9:
-                            Dialog d = new Dialog(this);
-                            SeekBar sb = new SeekBar(this);
-                            sb.setProgress(100);
-                            sb.setMax(100);
-                            sb.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                                @Override
-                                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                                    for (TextView childTV : childTVs) {
-                                        int alpha = (int) (((float) (progress * 255)) / 100);
-                                        childTV.setBackgroundColor(0xFFFFFF | (alpha << 24));
-                                    }
-                                }
-
-                                @Override
-                                public void onStartTrackingTouch(SeekBar seekBar) {
-
-                                }
-
-                                @Override
-                                public void onStopTrackingTouch(SeekBar seekBar) {
-
-                                }
-                            });
-                            sb.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                            Dialog c = new Dialog(this);
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                Objects.requireNonNull(d.getWindow()).setAttributes(new WindowManager.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, 0, PixelFormat.RGB_888));
+                                Objects.requireNonNull(c.getWindow()).setAttributes(new WindowManager.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, 0, PixelFormat.RGB_888));
                             } else
                                 //noinspection ControlFlowStatementWithoutBraces,deprecation
-                                Objects.requireNonNull(d.getWindow()).setAttributes(new WindowManager.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.TYPE_SYSTEM_ALERT, 0, PixelFormat.RGB_888));
-                            d.addContentView(sb, new ViewGroup.LayoutParams((int) (((float) width) * .7F), ViewGroup.LayoutParams.WRAP_CONTENT));
-                            d.show();
+                                Objects.requireNonNull(c.getWindow()).setAttributes(new WindowManager.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.TYPE_SYSTEM_ALERT, 0, PixelFormat.RGB_888));
+                            LinearLayout cLL = new LinearLayout(this);
+                            cLL.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                            cLL.setOrientation(LinearLayout.VERTICAL);
+                            LinearLayout[] linearLayouts = new LinearLayout[]{
+                                    new LinearLayout(this),
+                                    new LinearLayout(this),
+                                    new LinearLayout(this)
+                            };
+                            LinearLayout.LayoutParams cLLChildLP = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+                            Button TVsColorBtn = new Button(this);
+                            TVsColorBtn.setText(R.string.control_panel_color);
+                            TVsColorBtn.setOnClickListener(v2 -> {
+                                Dialog TVsColorDialog = new Dialog(MainActivity.this);
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                    Objects.requireNonNull(TVsColorDialog.getWindow()).setAttributes(new WindowManager.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, 0, PixelFormat.RGB_888));
+                                } else
+                                    //noinspection deprecation
+                                    Objects.requireNonNull(TVsColorDialog.getWindow()).setAttributes(new WindowManager.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.TYPE_SYSTEM_ALERT, 0, PixelFormat.RGB_888));
+                                HSVColorPickerRL TVsColorPicker = new HSVColorPickerRL(this, TVsColor, ((int) (width * .8)), ((int) (height * .4))) {
+                                    @Override
+                                    void onPickedAction(int color) {
+                                        for (TextView childTV : childTVs) {
+                                            TVsColor = color;
+                                            childTV.setBackgroundColor(TVsColor);
+                                            if (whetherTextsColorIsInverted_isChecked)
+                                                childTV.setTextColor(textsColor = invertColor(TVsColor));
+                                        }
+                                    }
+                                };
+                                TVsColorDialog.setContentView(TVsColorPicker, new ViewGroup.LayoutParams(((int) (width * .8)), ((int) (height * .4))));
+                                TVsColorDialog.show();
+                            });
+                            Button textsColorBtn = new Button(this);
+                            textsColorBtn.setOnClickListener(v2 -> {
+                                Dialog textsColorDialog = new Dialog(MainActivity.this);
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                    Objects.requireNonNull(textsColorDialog.getWindow()).setAttributes(new WindowManager.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, 0, PixelFormat.RGB_888));
+                                } else
+                                    //noinspection deprecation
+                                    Objects.requireNonNull(textsColorDialog.getWindow()).setAttributes(new WindowManager.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.TYPE_SYSTEM_ALERT, 0, PixelFormat.RGB_888));
+                                HSVColorPickerRL textsColorPicker = new HSVColorPickerRL(this, textsColor, ((int) (width * .8)), ((int) (height * .4))) {
+                                    @Override
+                                    void onPickedAction(int color) {
+                                        for (TextView childTV : childTVs) {
+                                            if (!whetherTextsColorIsInverted_isChecked) textsColor = color;
+                                            childTV.setTextColor(textsColor);
+                                        }
+                                    }
+                                };
+                                textsColorDialog.setContentView(textsColorPicker, new ViewGroup.LayoutParams(((int) (width * .8)), ((int) (height * .4))));
+                                textsColorDialog.show();
+                            });
+                            textsColorBtn.setText(R.string.text_color);
+                            Switch whetherTextColorIsInverted = new Switch(this);
+                            whetherTextColorIsInverted.setChecked(whetherTextsColorIsInverted_isChecked);
+                            whetherTextColorIsInverted.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                                textsColorBtn.setEnabled(!isChecked);
+                                whetherTextsColorIsInverted_isChecked = isChecked;
+                                for (TextView childTV : childTVs) {
+                                    childTV.setTextColor(HSVColorPickerRL.invertColor(textsColor = TVsColor));
+                                }
+                            });
+                            whetherTextColorIsInverted.setText(R.string.whether_text_color_is_inverted);
+                            whetherTextColorIsInverted.setLayoutParams(cLLChildLP);
+                            TVsColorBtn.setLayoutParams(cLLChildLP);
+                            textsColorBtn.setLayoutParams(cLLChildLP);
+                            LinearLayout.LayoutParams LLsLP = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1F);
+                            for (LinearLayout layout : linearLayouts) {
+                                layout.setLayoutParams(LLsLP);
+                                cLL.addView(layout);
+                            }
+                            linearLayouts[0].addView(TVsColorBtn);
+                            linearLayouts[1].addView(textsColorBtn);
+                            linearLayouts[2].addView(whetherTextColorIsInverted);
+                            c.setContentView(cLL);
+                            c.show();
                             break;
                         case 10:
                             stopFloatingWindow();
@@ -273,19 +337,45 @@ public class MainActivity extends AppCompatActivity {
         iv.setOnTouchListener(smallViewOnTouchListener);
         ll.addView(iv);
         wm.addView(ll, lp2);
+        if (notBeKilled) {
+            View view = new View(this) {
+                @Override
+                public boolean onTouchEvent(MotionEvent event) {
+                    System.out.println(event.getAction() + "\t" + event.getX() + "\t" + event.getY());
+                    return true;
+                }
+            };
+            view.setLayoutParams(new ViewGroup.LayoutParams(0, 0));
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                wm.addView(view, new WindowManager.LayoutParams(0, 0, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.RGB_888));
+            } else                 //noinspection deprecation
+                wm.addView(view, new WindowManager.LayoutParams(0, 0, WindowManager.LayoutParams.TYPE_SYSTEM_ALERT, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.RGB_888));
+        }
     }
 
     private void hide() {
         wm.removeViewImmediate(ll);
         NotificationManager nm = (NotificationManager) getSystemService(Service.NOTIFICATION_SERVICE);
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            NotificationChannel nc = new NotificationChannel("channel1", "隐藏通知", NotificationManager.IMPORTANCE_DEFAULT);
+            nc.setDescription("隐藏通知");
+            nc.canBypassDnd();
+            nc.setBypassDnd(true);
+            nc.enableLights(false);
+            nc.enableLights(false);
+            nm.createNotificationChannel(nc);
             Notification.Builder nb = new Notification.Builder(this, "channel1");
-            nb.setSmallIcon(R.drawable.ic_launcher_background)
+            nb.setSmallIcon(Icon.createWithBitmap(icon))
                     .setContentTitle("画板")
-                    .setContentText("点击取消隐藏控制悬浮窗")
-                    .setOngoing(false)
-                    .setAutoCancel(true);
-            nm.notify(1, nb.build());
+                    .setContentText("点击取消隐藏控制悬浮窗");
+//            PendingIntent pi = PendingIntent.getBroadcast(this, 1, new Intent(this, NotificationClickReceiver.class), PendingIntent.FLAG_CANCEL_CURRENT);
+            Intent intent = new Intent(this, this.getClass());
+            intent.putExtra("a", 1);
+            PendingIntent pi = PendingIntent.getActivity(this, 11, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+//            nb.setContentIntent(pi);
+            nb.setContentIntent(pi);
+            Notification build = nb.build();
+            nm.notify(1, build);
         } else {
             NotificationCompat.Builder ncb = new NotificationCompat.Builder(this, "channel1");
             ncb.setOngoing(false)
@@ -379,5 +469,14 @@ public class MainActivity extends AppCompatActivity {
     public void onBackPressed() {
         stopFloatingWindow();
         super.onBackPressed();
+    }
+
+    public class NotificationClickReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            startFloatingWindow();
+            Toast.makeText(MainActivity.this, "a", Toast.LENGTH_SHORT).show();
+        }
     }
 }

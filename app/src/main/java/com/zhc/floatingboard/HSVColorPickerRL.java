@@ -82,7 +82,7 @@ abstract class HSVColorPickerRL extends RelativeLayout {
         this.addView(ll);
     }
 
-    class HView extends View {
+    private class HView extends View {
         private int hW, hH;
         private Paint hPaint;
 
@@ -121,7 +121,7 @@ abstract class HSVColorPickerRL extends RelativeLayout {
         @Override
         public boolean onTouchEvent(MotionEvent event) {
             hsv[0] = event.getX() * 360F / ((float) hW);
-            int color = Color.HSVToColor(new float[]{hsv[0] + 180 - (hsv[0] > 180 ? 360 : 0), hsv[1], hsv[2]});
+            int color = invertColor(Color.HSVToColor(255, hsv));
             oppositeColorPaint.setColor(color);
             System.out.println("color = " + color);
             invalidateAllView();
@@ -129,7 +129,7 @@ abstract class HSVColorPickerRL extends RelativeLayout {
         }
     }
 
-    class SView extends View {
+    private class SView extends View {
         private int sW, sH;
         private Paint sPaint;
 
@@ -172,7 +172,7 @@ abstract class HSVColorPickerRL extends RelativeLayout {
         }
     }
 
-    class VView extends View {
+    private class VView extends View {
         private int vW, vH;
         private Paint vPaint;
 
@@ -215,7 +215,7 @@ abstract class HSVColorPickerRL extends RelativeLayout {
         }
     }
 
-    class AView extends View {
+    private class AView extends View {
         private int aW, aH;
         private Paint aPaint;
 
@@ -278,4 +278,11 @@ abstract class HSVColorPickerRL extends RelativeLayout {
     }
 
     abstract void onPickedAction(int color);
+
+    static int invertColor(int color) {
+        float[] HSV = new float[3];
+        Color.colorToHSV(color, HSV);
+        HSV[0] = HSV[0] + 180 - (HSV[0] > 180 ? 360 : 0);
+        return Color.HSVToColor(HSV);
+    }
 }
