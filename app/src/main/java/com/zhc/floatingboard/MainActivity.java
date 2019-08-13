@@ -185,10 +185,12 @@ public class MainActivity extends AppCompatActivity {
                                 lp.flags = 0;
                                 wm.updateViewLayout(pv, lp);
                                 childTVs[finalI].setText(R.string.drawing);
+                                strings[1] = getString(R.string.drawing);
                             } else {
                                 lp.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
                                 wm.updateViewLayout(pv, lp);
                                 childTVs[finalI].setText(R.string.controlling);
+                                strings[1] = getString(R.string.controlling);
                             }
                             break;
                         case 2:
@@ -227,9 +229,11 @@ public class MainActivity extends AppCompatActivity {
                             if (pv.isEraserMode) {
                                 pv.setEraserMode(false);
                                 childTVs[finalI].setText(R.string.drawing_mode);
+                                strings[6] = getString(R.string.drawing_mode);
                             } else {
                                 pv.setEraserMode(true);
                                 childTVs[finalI].setText(R.string.eraser_mode);
+                                strings[6] = getString(R.string.eraser_mode);
                             }
                             break;
                         case 7:
@@ -304,7 +308,7 @@ public class MainActivity extends AppCompatActivity {
                                 textsColorBtn.setEnabled(!isChecked);
                                 whetherTextsColorIsInverted_isChecked = isChecked;
                                 for (TextView childTV : childTVs) {
-                                    childTV.setTextColor(HSVColorPickerRL.invertColor(textsColor = TVsColor));
+                                    childTV.setTextColor(textsColor = HSVColorPickerRL.invertColor(TVsColor));
                                 }
                             });
                             whetherTextColorIsInverted.setText(R.string.whether_text_color_is_inverted);
